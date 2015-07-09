@@ -43,25 +43,31 @@ noteindex :: String -> Int
 noteindex n = fromMaybe 0 . elemIndex n $ case last n == '#' of
     True  -> notes_sharp
     False -> notes_flat
-    
-scaleintvl :: Int -> String -> [Int]
-scaleintvl tr s = 
+
+scaledegree :: Int -> String -> [Int]
+scaledegree tr s =
     let s' = splitOn "," s
         intvl t = map (\n -> (n+tr) `mod` 12) . catMaybes . map (flip elemIndex t) $ s'
     in intvl $ case any (== '#') s of
         True  -> interval_sharp
-        False -> interval_flat     
+        False -> interval_flat
+
+scaleinterval :: (Integral a, Fractional b) => [a] -> [b]
+scaleinterval s =
+    let scl (n:ns) = n : [ if x < n then x+12 else x | x<-ns ] ++ [n+12]
+        intvl s = zipWith (-) (tail (scl s)) (scl s)
+    in map (\i -> (fromIntegral i) / 2) (intvl s)
 
 scalelist :: String -> [String]
 scalelist s = fromJust $ lookup s scaledict >>= \a -> return (map fst a)
 
 fretboard :: [Int] -> [[Maybe Int]]
-fretboard scale = [ [ if fret s f `elem` scale then Just (fret s f) else Nothing | f <- [0..14] ] | s <- strings ] 
+fretboard scale = [ [ if fret s f `elem` scale then Just (fret s f) else Nothing | f <- [0..14] ] | s <- strings ]
     where fret s f = (s+f) `mod` 12
 
 shownote :: Maybe Int -> String -> String -> String
-shownote mnote pre post = 
-    let stringnote i = notes_flat !! i
+shownote mnote pre post =
+    let stringnote i = notes_flat !! (i `mod` 12)
     in case mnote of
         Just note ->
             let n = stringnote note
@@ -70,27 +76,35 @@ shownote mnote pre post =
                 _ -> (pre ++ n ++ post)
         Nothing -> (pre ++ [head post] ++ post)
 
-printfretboard :: [[Maybe Int]] -> IO ()
-printfretboard (f:fs) = putStr (shownote (head f) "" " |") >> printstring (tail f) >> printfretboard fs
-printfretboard []     = putStrLn dots
+printstring :: [Maybe Int] -> String
+printstring str =
+    let printstring' out (s:ss) = printstring' (out ++ (shownote s "|--" "--")) ss
+        printstring' out []     = out
+    in printstring' [] str
 
-printstring :: [Maybe Int] -> IO ()
-printstring (s:ss) = putStr (shownote s "|--" "--") >> printstring ss
-printstring []     = putStrLn []   
+printfretboard :: [[Maybe Int]] -> String
+printfretboard frets =
+    let dots                   = "                  o           o           o           o                o o"
+        printnut n             = shownote n "" " |"
+        printfrets' out (f:fs) = printfrets' ((printnut (head f) ++ printstring (tail f)) : out) fs
+        printfrets' out []     = intercalate "\n" (reverse (dots:out))
+    in printfrets' [] frets
 
 lookupscale :: [String] -> Maybe [Int]
-lookupscale cfg = lookup (head cfg) scaledict >>= lookup (last cfg) >>= return . scaleintvl (noteindex (cfg!!1))
+lookupscale cfg = lookup (head cfg) scaledict >>= lookup (last cfg) >>= return . scaledegree (noteindex (cfg!!1))
 
-dots :: String
-dots = "                  o           o           o           o                o o"
+printscale :: [String] -> String
+printscale cfg =
+    let getscale cfg = lookup (head cfg) scaledict >>= lookup (last cfg) >>= return . scaledegree (noteindex (cfg!!1))
+        scale     = fromJust $ lookupscale cfg >>= return . map Just
+        intervals = fromJust $ lookupscale cfg >>= return . scaleinterval
+        frets     = fromJust $ lookupscale cfg >>= return . fretboard
+    in (init . concatMap (\i -> shownote i "  " "  -") $ scale) ++ "\n" ++
+       (intercalate " > " (map show intervals)) ++ "\n" ++
+       (printfretboard frets)
 
 main :: IO ()
 main = do
-    let cfg = ["Scale","G","Major"]
-    let cfg = ["Chord","G","Major"]
-    let key = noteindex (cfg!!1)
-    let scale = fromJust $ lookupscale cfg >>= return . map Just
-    let frets = fromJust $ lookupscale cfg >>= return . fretboard
-
-    putStrLn . init . concatMap (\i -> shownote i "  " "  -") $ scale
-    printfretboard frets
+    putStrLn $ printscale ["Scale","G","Major"]
+    putStrLn $ printscale ["Chord","G","Major"]
+    putStrLn $ printscale ["Scale","A","Blues Pentatonic"]
