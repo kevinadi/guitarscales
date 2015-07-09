@@ -46,7 +46,7 @@ noteindex n = fromMaybe 0 . elemIndex n $ case last n == '#' of
 
 scaledegree :: Int -> String -> [Int]
 scaledegree tr s =
-    let s' = splitOn "," s
+    let s'      = splitOn "," s
         intvl t = map (\n -> (n+tr) `mod` 12) . catMaybes . map (flip elemIndex t) $ s'
     in intvl $ case any (== '#') s of
         True  -> interval_sharp
@@ -55,7 +55,7 @@ scaledegree tr s =
 scaleinterval :: (Integral a, Fractional b) => [a] -> [b]
 scaleinterval s =
     let scl (n:ns) = n : [ if x < n then x+12 else x | x<-ns ] ++ [n+12]
-        intvl s = zipWith (-) (tail (scl s)) (scl s)
+        intvl s    = zipWith (-) (tail (scl s)) (scl s)
     in map (\i -> (fromIntegral i) / 2) (intvl s)
 
 scalelist :: String -> [String]
@@ -95,8 +95,7 @@ lookupscale cfg = lookup (head cfg) scaledict >>= lookup (last cfg) >>= return .
 
 printscale :: [String] -> String
 printscale cfg =
-    let getscale cfg = lookup (head cfg) scaledict >>= lookup (last cfg) >>= return . scaledegree (noteindex (cfg!!1))
-        scale     = fromJust $ lookupscale cfg >>= return . map Just
+    let scale     = fromJust $ lookupscale cfg >>= return . map Just
         intervals = fromJust $ lookupscale cfg >>= return . scaleinterval
         frets     = fromJust $ lookupscale cfg >>= return . fretboard
     in (init . concatMap (\i -> shownote i "  " "  -") $ scale) ++ "\n" ++
