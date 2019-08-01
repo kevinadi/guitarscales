@@ -46,19 +46,19 @@ scaletype = ''
 for x in range(len(scaledict)):
     if scaletype != scaledict[x][0]:
         scaletype = scaledict[x][0]
-        print '\n', scaletype.center(6),
+        print('\n', scaletype.center(6), end=' ')
     else:
-        print ''.center(6),
-    print x,':', scaledict[x][1]
+        print(''.center(6), end=' ')
+    print(x,':', scaledict[x][1])
 
 ### Get inputs
-scaleinput = int(raw_input('Scale: '))
-while scaleinput not in range(len(scaledict)):
-    print 'Scale must be between 0 and', len(scaledict)-1
-    scaleinput = int(raw_input('Scale: '))
+scaleinput = int(input('Scale: '))
+while scaleinput not in list(range(len(scaledict))):
+    print('Scale must be between 0 and', len(scaledict)-1)
+    scaleinput = int(input('Scale: '))
 scalevalues = scaledict[int(scaleinput)][2]
 if scaleinput != 0: #get key if not chromatic
-    key = raw_input('Key: ').title()
+    key = input('Key: ').title()
 else:
     key = 'C'
 if key.find('b') >=0 or scalevalues.find('b') >= 0:
@@ -81,10 +81,10 @@ intervals = ' - '.join(str((idx[x] - idx[x-1])/2.) for x in range(1,len(idx)))
 
 ### Pretty print
 scalename = key + ' ' + scaledict[scaleinput][1] + ' ' + scaledict[scaleinput][0]
-print '\n', '-'*len(scalename), '\n', scalename, '\n', '-'*len(scalename)
-print '\nScale notes:', ' - '.join(x.center(3) for x in scalenotes)
-print ' '*12, ' - '.join(x.center(3) for x in scalevalues.split(',')), '\n'
-print 'Intervals:', intervals, '\n'
+print('\n', '-'*len(scalename), '\n', scalename, '\n', '-'*len(scalename))
+print('\nScale notes:', ' - '.join(x.center(3) for x in scalenotes))
+print(' '*12, ' - '.join(x.center(3) for x in scalevalues.split(',')), '\n')
+print('Intervals:', intervals, '\n')
 for x in range(6):
     if x == 0:
         FRET, NUT = '|', '||'
@@ -103,7 +103,7 @@ for x in range(6):
             sys.stdout.write( ('('+frets[x][y]+')').center(5,'-') + FRET )
         else:
             sys.stdout.write( frets[x][y].center(5,'-') + FRET )
-    print
+    print()
 DOT = 'o'
-print
-print ' '*17, 3, ' '*9, 5, ' '*9, 7, ' '*9, 9, ' '*14, DOT,DOT, ' '*14, 15
+print()
+print(' '*17, 3, ' '*9, 5, ' '*9, 7, ' '*9, 9, ' '*14, DOT,DOT, ' '*14, 15)
