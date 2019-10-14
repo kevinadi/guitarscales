@@ -1,11 +1,15 @@
+{-# LANGUAGE DeriveDataTypeable #-}
+
+import Control.Monad
+import Data.Char
 import Data.List
 import Data.List.Split
 import Data.Maybe
-import Control.Monad
+import System.Console.CmdArgs
 
 scales = [  ("Chromatic"        , "1,b2,2,b3,3,4,b5,5,b6,6,b7,7"),
             ("Major"            , "1,2,3,4,5,6,7"),
-            ("Natural Minor"    , "1,2,b3,4,5,b6,b7"),
+            ("Minor"            , "1,2,b3,4,5,b6,b7"),
             ("Harmonic Minor"   , "1,2,b3,4,5,b6,7"),
             ("Major Pentatonic" , "1,2,3,5,6"),
             ("Minor Pentatonic" , "1,b3,4,5,b7"),
@@ -29,7 +33,7 @@ chords = [  ("Major"            , "1,3,5"),
             ("Diminished"       , "1,b3,b5") ]
 
 scaledict=[ ("Scale", scales),
-            ("Mode" , modes),
+            ("Mode" , Main.modes),
             ("Chord", chords) ]
 
 notes_flat =  ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
@@ -102,8 +106,33 @@ printscale cfg =
        (intercalate " > " (map show intervals)) ++ "\n" ++
        (printfretboard frets)
 
+data Options = Options {
+  mode :: String,
+  key :: String,
+  qual :: String
+} deriving (Data, Typeable)
+
+options :: Options
+options = Options {
+  mode = "S" &= typ "MODE" &= help "scale or chord",
+  key = "C" &= typ "KEY",
+  qual = "Major" &= typ "QUAL" &= help "major\nminor\nmajor pentatonic\nminor pentatonic"
+  }
+  &= summary "Print guitar scales"
+  &= program "guitarscales"
+
+capitalized :: String -> String
+capitalized s = zipWith upper (' ':s) s where
+  upper c1 c2 | isSpace c1 && isLower c2 = toUpper c2
+  upper c1 c2 = c2
+
+scale_or_chord :: String -> String
+scale_or_chord "s" = "Scale"
+scale_or_chord "c" = "Chord"
+scale_or_chord x = capitalized x
+
 main :: IO ()
 main = do
-    putStrLn $ printscale ["Scale","G","Major"]
-    putStrLn $ printscale ["Chord","G","Major"]
-    putStrLn $ printscale ["Scale","A","Blues Pentatonic"]
+    opts <- cmdArgs options
+    putStrLn $ (capitalized . key) opts ++ " " ++ (capitalized . qual) opts ++ " " ++ (scale_or_chord . mode) opts
+    putStrLn $ printscale [(scale_or_chord . mode) opts, (capitalized . key) opts, (capitalized . qual) opts]
