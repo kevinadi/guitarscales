@@ -114,7 +114,7 @@ data Options = Options {
 
 options :: Options
 options = Options {
-  mode = "S" &= typ "MODE" &= help "scale or chord",
+  mode = "Scale" &= typ "MODE" &= help "scale or chord",
   key = "C" &= typ "KEY",
   qual = "Major" &= typ "QUAL" &= help "major\nminor\nmajor pentatonic\nminor pentatonic"
   }
